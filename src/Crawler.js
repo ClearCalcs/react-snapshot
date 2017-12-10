@@ -15,6 +15,7 @@ export default class Crawler {
     this.paths = [...options.include]
     this.exclude = options.exclude.map((g) => glob(g, { extended: true, globstar: true}))
     this.stripJS = options.stripJS
+    this.stripJSFrom = options.stripJSFrom
     this.processed = {}
     this.snapshotDelay = snapshotDelay
   }
@@ -38,9 +39,11 @@ export default class Crawler {
     return snapshot(this.protocol, this.host, urlPath, this.snapshotDelay).then(window => {
       if (this.stripJS) {
         const strip = new RegExp(this.stripJS)
-        Array.from(window.document.querySelectorAll('script')).forEach(script => {
-          if (strip.exec(url.parse(script.src).path)) script.remove()
-        })
+        if(!this.stripJSFrom || this.stripJSFrom.indexOf(urlPath) !== -1) {
+          Array.from(window.document.querySelectorAll('script')).forEach(script => {
+            if (strip.exec(url.parse(script.src).path)) script.remove()
+          })
+        }
       }
       if (Boolean(window.react_snapshot_state)) {
         const stateJSON = JSON.stringify(window.react_snapshot_state)
